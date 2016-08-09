@@ -8,6 +8,7 @@ import (
 	"math"
 	"reflect"
 
+	"encoding/json"
 	"github.com/linkedin-inc/golang-neo4j-bolt-driver/errors"
 	"github.com/linkedin-inc/golang-neo4j-bolt-driver/structures"
 )
@@ -170,6 +171,10 @@ func (e Encoder) encode(iVal interface{}) error {
 		return e.encodeNil()
 	}
 	rv := reflect.ValueOf(iVal)
+	if rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+
 	switch rv.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		err = e.encodeInt(int64(rv.Int()))
@@ -202,7 +207,18 @@ func (e Encoder) encode(iVal interface{}) error {
 		if ok {
 			err = e.encodeStructure(val)
 		} else {
-			err = errors.New("Unsupported Struct: %T, %+v", rv, rv)
+			b, err := json.Marshal(iVal)
+			if err != nil {
+				err = errors.New("Struct Marshal failed: %T, %+v", rv, rv)
+				return err
+			}
+			var v map[string]interface{}
+			err = json.Unmarshal(b, &v)
+			if err != nil {
+				err = errors.New("Unmarshal Struct to map failed: %T, %+v", rv, rv)
+				return err
+			}
+			return e.encode(v)
 		}
 	default:
 		return errors.New("Unrecognized type when encoding data for Bolt transport: %T %+v", rv, rv)
