@@ -6,9 +6,9 @@ import (
 	"encoding/binary"
 	"io"
 
-	"github.com/johnnadratowski/golang-neo4j-bolt-driver/errors"
-	"github.com/johnnadratowski/golang-neo4j-bolt-driver/structures/graph"
-	"github.com/johnnadratowski/golang-neo4j-bolt-driver/structures/messages"
+	"github.com/linkedin-inc/golang-neo4j-bolt-driver/errors"
+	"github.com/linkedin-inc/golang-neo4j-bolt-driver/structures/graph"
+	"github.com/linkedin-inc/golang-neo4j-bolt-driver/structures/messages"
 )
 
 // Decoder decodes a message from the bolt protocol stream

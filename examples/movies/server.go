@@ -9,7 +9,7 @@ import (
 	"os"
 	"strconv"
 
-	driver "github.com/johnnadratowski/golang-neo4j-bolt-driver"
+	driver "github.com/linkedin-inc/golang-neo4j-bolt-driver"
 )
 
 // MovieResult is the result of moves when searching
