@@ -2,6 +2,7 @@ package encoding
 
 import (
 	"bytes"
+	"database/sql/driver"
 	"encoding/binary"
 	"io"
 
@@ -41,8 +42,8 @@ func (d Decoder) read() (*bytes.Buffer, error) {
 	output := &bytes.Buffer{}
 	for {
 		lengthBytes := make([]byte, 2)
-		if numRead, err := d.r.Read(lengthBytes); numRead != 2 {
-			return nil, errors.Wrap(err, "Couldn't read expected bytes for message length. Read: %d Expected: 2.", numRead)
+		if numRead, _ := d.r.Read(lengthBytes); numRead != 2 {
+			return nil, driver.ErrBadConn
 		}
 
 		// Chunk header contains length of current message
@@ -54,14 +55,14 @@ func (d Decoder) read() (*bytes.Buffer, error) {
 
 		data, err := d.readData(messageLen)
 		if err != nil {
-			return output, errors.Wrap(err, "An error occurred reading message data")
+			return output, driver.ErrBadConn
 		}
 
 		numWritten, err := output.Write(data)
 		if numWritten < len(data) {
-			return output, errors.New("Didn't write full data on output. Expected: %d Wrote: %d", len(data), numWritten)
+			return output, driver.ErrBadConn
 		} else if err != nil {
-			return output, errors.Wrap(err, "Error writing data to output")
+			return output, driver.ErrBadConn
 		}
 	}
 }

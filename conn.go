@@ -761,10 +761,10 @@ func (c *boltConn) QueryNeoAll(query string, params map[string]interface{}) ([][
 
 func (c *boltConn) queryNeo(query string, params map[string]interface{}) (*boltRows, error) {
 	if c.statement != nil {
-		return nil, errors.New("An open statement already exists")
+		return nil, driver.ErrBadConn
 	}
 	if c.closed {
-		return nil, errors.New("Connection already closed")
+		return nil, driver.ErrBadConn
 	}
 
 	c.statement = newStmt(query, c)

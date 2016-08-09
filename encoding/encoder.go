@@ -1,15 +1,15 @@
 package encoding
 
 import (
+	"bytes"
+	"database/sql/driver"
 	"encoding/binary"
 	"io"
 	"math"
-
-	"bytes"
+	"reflect"
 
 	"github.com/johnnadratowski/golang-neo4j-bolt-driver/errors"
 	"github.com/johnnadratowski/golang-neo4j-bolt-driver/structures"
-	"reflect"
 )
 
 const (
@@ -108,19 +108,18 @@ func (e Encoder) Write(p []byte) (n int, err error) {
 
 	n, err = e.buf.Write(p)
 	if err != nil {
-		err = errors.Wrap(err, "An error occurred writing to encoder temp buffer")
-		return n, err
+		return n, driver.ErrBadConn
 	}
 
 	length := e.buf.Len()
 	for length >= int(e.chunkSize) {
 		if err := binary.Write(e.w, binary.BigEndian, e.chunkSize); err != nil {
-			return 0, errors.Wrap(err, "An error occured writing chunksize")
+			return 0, driver.ErrBadConn
 		}
 
 		numWritten, err := e.w.Write(e.buf.Next(int(e.chunkSize)))
 		if err != nil {
-			err = errors.Wrap(err, "An error occured writing a chunk")
+			err = driver.ErrBadConn
 		}
 
 		return numWritten, err
@@ -134,17 +133,17 @@ func (e Encoder) flush() error {
 	length := e.buf.Len()
 	if length > 0 {
 		if err := binary.Write(e.w, binary.BigEndian, uint16(length)); err != nil {
-			return errors.Wrap(err, "An error occured writing length bytes during flush")
+			return err
 		}
 
 		if _, err := e.buf.WriteTo(e.w); err != nil {
-			return errors.Wrap(err, "An error occured writing message bytes during flush")
+			return err
 		}
 	}
 
 	_, err := e.w.Write(EndMessage)
 	if err != nil {
-		return errors.Wrap(err, "An error occurred ending encoding message")
+		return err
 	}
 	e.buf.Reset()
 
