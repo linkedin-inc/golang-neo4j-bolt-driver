@@ -194,10 +194,17 @@ func (e Encoder) encode(iVal interface{}) error {
 		err = e.encodeSlice(ret)
 	case reflect.Map:
 		if rv.Type().Key().Kind() == reflect.String {
-			iv := rv.Interface()
+			it := reflect.TypeOf((*interface{})(nil)).Elem()
+			m := reflect.MakeMap(reflect.MapOf(reflect.TypeOf(iVal).Key(), it))
+			for _, mk := range rv.MapKeys() {
+				m.SetMapIndex(mk, rv.MapIndex(mk))
+			}
+			iv := m.Interface()
 			val, ok := iv.(map[string]interface{})
 			if ok {
 				err = e.encodeMap(val)
+			} else {
+				err = errors.New("encode map failed: %T, %+v", rv, rv)
 			}
 		} else {
 			err = errors.New("Unsupported kind of map: %T, %+v", rv, rv)
