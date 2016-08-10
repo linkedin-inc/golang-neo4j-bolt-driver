@@ -160,19 +160,19 @@ func (d Decoder) decode(buffer *bytes.Buffer) (interface{}, error) {
 		}
 		return string(buffer.Next(size)), nil
 	case marker == String8Marker:
-		var size int8
+		var size uint8
 		if err := binary.Read(buffer, binary.BigEndian, &size); err != nil {
 			return nil, errors.Wrap(err, "An error occurred reading string size")
 		}
 		return string(buffer.Next(int(size))), nil
 	case marker == String16Marker:
-		var size int16
+		var size uint16
 		if err := binary.Read(buffer, binary.BigEndian, &size); err != nil {
 			return nil, errors.Wrap(err, "An error occurred reading string size")
 		}
 		return string(buffer.Next(int(size))), nil
 	case marker == String32Marker:
-		var size int32
+		var size uint32
 		if err := binary.Read(buffer, binary.BigEndian, &size); err != nil {
 			return nil, errors.Wrap(err, "An error occurred reading string size")
 		}
