@@ -7,8 +7,8 @@ import (
 	"io"
 	"math"
 	"reflect"
+	"strings"
 
-	"encoding/json"
 	"github.com/linkedin-inc/golang-neo4j-bolt-driver/errors"
 	"github.com/linkedin-inc/golang-neo4j-bolt-driver/structures"
 )
@@ -171,7 +171,7 @@ func (e Encoder) encode(iVal interface{}) error {
 		return e.encodeNil()
 	}
 	rv := reflect.ValueOf(iVal)
-	if rv.Kind() == reflect.Ptr {
+	for rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()
 	}
 
@@ -195,7 +195,7 @@ func (e Encoder) encode(iVal interface{}) error {
 	case reflect.Map:
 		if rv.Type().Key().Kind() == reflect.String {
 			it := reflect.TypeOf((*interface{})(nil)).Elem()
-			m := reflect.MakeMap(reflect.MapOf(reflect.TypeOf(iVal).Key(), it))
+			m := reflect.MakeMap(reflect.MapOf(rv.Type().Key(), it))
 			for _, mk := range rv.MapKeys() {
 				m.SetMapIndex(mk, rv.MapIndex(mk))
 			}
@@ -210,22 +210,11 @@ func (e Encoder) encode(iVal interface{}) error {
 			err = errors.New("Unsupported kind of map: %T, %+v", rv, rv)
 		}
 	case reflect.Struct:
-		val, ok := iVal.(structures.Structure)
+		val, ok := rv.Interface().(structures.Structure)
 		if ok {
 			err = e.encodeStructure(val)
 		} else {
-			b, err := json.Marshal(iVal)
-			if err != nil {
-				err = errors.New("Struct Marshal failed: %T, %+v", rv, rv)
-				return err
-			}
-			var v map[string]interface{}
-			err = json.Unmarshal(b, &v)
-			if err != nil {
-				err = errors.New("Unmarshal Struct to map failed: %T, %+v", rv, rv)
-				return err
-			}
-			return e.encode(v)
+			err = e.encodeStruct(rv)
 		}
 	default:
 		return errors.New("Unrecognized type when encoding data for Bolt transport: %T %+v", rv, rv)
@@ -493,4 +482,53 @@ func (e Encoder) encodeStructure(val structures.Structure) error {
 	}
 
 	return nil
+}
+
+func structFields(rv reflect.Value) []reflect.StructField {
+	t := rv.Type()
+	var f []reflect.StructField
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if field.PkgPath != "" {
+			continue
+		}
+		if tag := field.Tag.Get("json"); tag == "-" {
+			continue
+		}
+		f = append(f, field)
+	}
+	return f
+}
+
+func (e Encoder) encodeStruct(rv reflect.Value) error {
+	fields := structFields(rv)
+	out := make(map[string]interface{})
+	for _, field := range fields {
+		name := field.Name
+		val := rv.FieldByName(name)
+		var finalVal interface{}
+		res := strings.Split(field.Tag.Get("json"), ",")
+		tagName := res[0]
+		tagOpts := res[1:]
+		if tagName != "" {
+			name = tagName
+		}
+
+		hasOmitempty := false
+		for _, tagOpt := range tagOpts {
+			if tagOpt == "omitempty" {
+				hasOmitempty = true
+			}
+		}
+		if hasOmitempty {
+			zero := reflect.Zero(val.Type()).Interface()
+			current := val.Interface()
+			if reflect.DeepEqual(current, zero) {
+				continue
+			}
+		}
+		finalVal = val.Interface()
+		out[name] = finalVal
+	}
+	return e.encodeMap(out)
 }
