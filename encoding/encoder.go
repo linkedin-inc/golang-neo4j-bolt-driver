@@ -8,6 +8,7 @@ import (
 	"math"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/linkedin-inc/golang-neo4j-bolt-driver/errors"
 	"github.com/linkedin-inc/golang-neo4j-bolt-driver/structures"
@@ -213,6 +214,11 @@ func (e Encoder) encode(iVal interface{}) error {
 		val, ok := rv.Interface().(structures.Structure)
 		if ok {
 			err = e.encodeStructure(val)
+		} else if rv.Type().PkgPath() == "time" && rv.Type().Name() == "Time" {
+			val, ok := rv.Interface().(time.Time)
+			if ok {
+				err = e.encodeString(val.Format(time.RFC3339Nano))
+			}
 		} else {
 			err = e.encodeStruct(rv)
 		}
