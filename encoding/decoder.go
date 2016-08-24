@@ -183,19 +183,19 @@ func (d Decoder) decode(buffer *bytes.Buffer) (interface{}, error) {
 		size := int(marker) - int(TinySliceMarker)
 		return d.decodeSlice(buffer, size)
 	case marker == Slice8Marker:
-		var size int8
+		var size uint8
 		if err := binary.Read(buffer, binary.BigEndian, &size); err != nil {
 			return nil, errors.Wrap(err, "An error occurred reading slice size")
 		}
 		return d.decodeSlice(buffer, int(size))
 	case marker == Slice16Marker:
-		var size int16
+		var size uint16
 		if err := binary.Read(buffer, binary.BigEndian, &size); err != nil {
 			return nil, errors.Wrap(err, "An error occurred reading slice size")
 		}
 		return d.decodeSlice(buffer, int(size))
 	case marker == Slice32Marker:
-		var size int32
+		var size uint32
 		if err := binary.Read(buffer, binary.BigEndian, &size); err != nil {
 			return nil, errors.Wrap(err, "An error occurred reading slice size")
 		}
@@ -206,19 +206,19 @@ func (d Decoder) decode(buffer *bytes.Buffer) (interface{}, error) {
 		size := int(marker) - int(TinyMapMarker)
 		return d.decodeMap(buffer, size)
 	case marker == Map8Marker:
-		var size int8
+		var size uint8
 		if err := binary.Read(buffer, binary.BigEndian, &size); err != nil {
 			return nil, errors.Wrap(err, "An error occurred reading map size")
 		}
 		return d.decodeMap(buffer, int(size))
 	case marker == Map16Marker:
-		var size int16
+		var size uint16
 		if err := binary.Read(buffer, binary.BigEndian, &size); err != nil {
 			return nil, errors.Wrap(err, "An error occurred reading map size")
 		}
 		return d.decodeMap(buffer, int(size))
 	case marker == Map32Marker:
-		var size int32
+		var size uint32
 		if err := binary.Read(buffer, binary.BigEndian, &size); err != nil {
 			return nil, errors.Wrap(err, "An error occurred reading map size")
 		}
@@ -229,13 +229,13 @@ func (d Decoder) decode(buffer *bytes.Buffer) (interface{}, error) {
 		size := int(marker) - int(TinyStructMarker)
 		return d.decodeStruct(buffer, size)
 	case marker == Struct8Marker:
-		var size int8
+		var size uint8
 		if err := binary.Read(buffer, binary.BigEndian, &size); err != nil {
 			return nil, errors.Wrap(err, "An error occurred reading struct size")
 		}
 		return d.decodeStruct(buffer, int(size))
 	case marker == Struct16Marker:
-		var size int16
+		var size uint16
 		if err := binary.Read(buffer, binary.BigEndian, &size); err != nil {
 			return nil, errors.Wrap(err, "An error occurred reading struct size")
 		}
