@@ -182,7 +182,12 @@ func (e Encoder) encode(iVal interface{}) error {
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		err = e.encodeInt(int64(rv.Uint()))
 	case reflect.Float32, reflect.Float64:
-		err = e.encodeFloat(rv.Float())
+		intF, frac := math.Modf(rv.Float())
+		if frac > 0 {
+			err = e.encodeFloat(rv.Float())
+		} else {
+			return e.encodeInt(int64(intF))
+		}
 	case reflect.Bool:
 		err = e.encodeBool(rv.Bool())
 	case reflect.String:
